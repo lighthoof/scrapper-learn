@@ -13,37 +13,72 @@ func TestGetHeadingFromHTML(t *testing.T) {
 		errorContains string
 	}{
 		{
-			name:     "remove schema",
-			inputURL: "https://www.boot.dev/blog/path",
-			expected: "www.boot.dev/blog/path",
+			name: "find h1",
+			inputURL: `<html>
+						  <body>
+						    <h1>Welcome</h1>
+							  <h2>to Boot.dev</h2>
+						      <main>
+						      	<p>Learn to code by building real projects.</p>
+						      	<p>This is the second paragraph.</p>
+						      </main>
+						  </body>
+						</html>`,
+			expected: "Welcome",
 		},
 		{
-			name:     "remove trailing slash ",
-			inputURL: "https://www.boot.dev/blog/path/",
-			expected: "www.boot.dev/blog/path",
+			name: "find h2",
+			inputURL: `<html>
+						  <body>
+						    <h2>Welcome to Boot.dev</h2>
+						    <main>
+						      <p>Learn to code by building real projects.</p>
+						      <p>This is the second paragraph.</p>
+						    </main>
+						  </body>
+						</html>`,
+			expected: "Welcome to Boot.dev",
 		},
 		{
-			name:     "lower capitlas",
-			inputURL: "http://www.boot.dev/BLoG/path",
-			expected: "www.boot.dev/blog/path",
+			name: "no closing tag",
+			inputURL: `<html>
+						  <body>
+						    <h1>Welcome to Boot.dev</h1
+						    <main>
+						      <p>Learn to code by building real projects.</p>
+						      <p>This is the second paragraph.</p>
+						    </main>
+						  </body>
+						</html>`,
+			expected: "Welcome to Boot.dev",
 		},
 		{
-			name:     "remove trailing slash and lower capitals",
-			inputURL: "http://www.BooT.dev/blog/path/",
-			expected: "www.boot.dev/blog/path",
+			name: "no opening tag",
+			inputURL: `<html>
+						  <body>
+						    h1>Welcome to Boot.dev</h1>
+						    <main>
+						      <p>Learn to code by building real projects.</p>
+						      <p>This is the second paragraph.</p>
+						    </main>
+						  </body>
+						</html>`,
+			expected: "",
 		},
 		{
-			name:          "handle invalid url",
-			inputURL:      `:\\invalidURL`,
-			expected:      "",
-			errorContains: "couldn't parse URL",
+			name: "not html",
+			inputURL: `if err != nil && !strings.Contains(err.Error(), tc.errorContains) {
+				t.Errorf("Test %v - '%s' FAIL: unexpected error: %v", i, tc.name, err)
+				return`,
+			expected: "",
+			//errorContains: "couldn't parse URL",
 		},
 		// add more test cases here
 	}
 
 	for i, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			actual, err := normalizeURL(tc.inputURL)
+			actual, err := getHeadingFromHTML(tc.inputURL)
 			if err != nil && !strings.Contains(err.Error(), tc.errorContains) {
 				t.Errorf("Test %v - '%s' FAIL: unexpected error: %v", i, tc.name, err)
 				return
