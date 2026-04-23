@@ -37,9 +37,57 @@ func getFirstParagraphFromHTML(html string) (string, error) {
 }
 
 func getURLsFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
-	return []string{}, nil
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlBody))
+	if err != nil {
+		return []string{}, err
+	}
+
+	allURLs := []string{}
+	doc.Find("a[href]").Each(func(_ int, s *goquery.Selection) {
+		href, exists := s.Attr("href")
+		if !exists || href == "" {
+			return
+		}
+
+		parsedRef, err := url.Parse(href)
+		if err != nil {
+			return
+		}
+
+		if parsedRef.Fragment != "" && parsedRef.Path == "" {
+			return
+		}
+
+		absoluteURL := baseURL.ResolveReference(parsedRef)
+		allURLs = append(allURLs, absoluteURL.String())
+	})
+	return allURLs, nil
 }
 
 func getImagesFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
-	return []string{}, nil
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlBody))
+	if err != nil {
+		return []string{}, err
+	}
+
+	allImages := []string{}
+	doc.Find("img[src]").Each(func(_ int, s *goquery.Selection) {
+		src, exists := s.Attr("src")
+		if !exists || src == "" {
+			return
+		}
+
+		parsedSrc, err := url.Parse(src)
+		if err != nil {
+			return
+		}
+
+		if parsedSrc.Fragment != "" && parsedSrc.Path == "" {
+			return
+		}
+
+		absoluteImageURL := baseURL.ResolveReference(parsedSrc)
+		allImages = append(allImages, absoluteImageURL.String())
+	})
+	return allImages, nil
 }
